@@ -11,6 +11,7 @@ except ImportError:
     from yaml import Loader
 import glob
 import logging
+import logging.config
 import multiprocessing
 from multiprocessing.dummy import Pool
 import os
@@ -30,8 +31,9 @@ MAX_RETRY_COUNT = 3
 SLEEP_TIME = 2
 UPLOAD_TIMEOUT = 600
 
+
 # Configure logger
-logging.config.fileConfig('logging_config.ini')
+logging.config.fileConfig('./cassandra_snapshotter/logging_config.ini')
 logging.FileHandler('/var/log/cassandra/snapshot.log')
 logger = logging.getLogger('agent')
 
@@ -218,8 +220,10 @@ def main():
 
     args = base_parser.parse_args()
     subcommand = args.subcommand
+    logger.info("Prepare subcommand")
 
     if subcommand == 'create-upload-manifest':
+        logger.info("Prepare create-upload-manifest subcommand")
         create_upload_manifest(
             args.snapshot_name,
             args.snapshot_keyspaces,
