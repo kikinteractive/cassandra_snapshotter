@@ -30,7 +30,10 @@ MAX_RETRY_COUNT = 3
 SLEEP_TIME = 2
 UPLOAD_TIMEOUT = 600
 
-logger = logging.getLogger(__name__)
+# Configure logger
+logging.config.fileConfig('logging_config.ini')
+logging.FileHandler('/var/log/cassandra/snapshot.log')
+logger = logging.getLogger('agent')
 
 
 def check_lzop():
