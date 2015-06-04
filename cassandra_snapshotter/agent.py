@@ -34,8 +34,10 @@ UPLOAD_TIMEOUT = 600
 
 # Configure logger
 logging.config.fileConfig('./cassandra_snapshotter/logging_config.ini')
-logging.FileHandler('/var/log/cassandra/snapshot.log')
 logger = logging.getLogger('agent')
+fh = logging.FileHandler('/var/log/cassandra/snapshot.log')
+fh.setLevel(logging.DEBUG)
+logger.addHandler(fh)
 
 
 def check_lzop():
