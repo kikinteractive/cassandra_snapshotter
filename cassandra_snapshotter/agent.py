@@ -35,9 +35,6 @@ UPLOAD_TIMEOUT = 600
 # Configure logger
 logging.config.fileConfig('./cassandra_snapshotter/logging_config.ini', defaults={'logfilename': '/var/log/cassandra/snapshot.log'})
 logger = logging.getLogger('agent')
-#fh = logging.FileHandler('/var/log/cassandra/snapshot.log')
-#fh.setLevel(logging.DEBUG)
-#logger.addHandler(fh)
 
 
 def check_lzop():
@@ -108,12 +105,11 @@ def upload_chunk(mp, chunk, index):
 
 
 def cancel_upload(bucket, mp, remote_path):
-    '''
-    safe way to cancel a multipart upload
+    """
+    Safe way to cancel a multipart upload
     sleeps SLEEP_TIME seconds and then makes sure that there are not parts left
     in storage
-
-    '''
+    """
     while True:
         try:
             time.sleep(SLEEP_TIME)
@@ -194,9 +190,15 @@ def create_upload_manifest(snapshot_name, snapshot_keyspaces, snapshot_table, co
 
 
 def main():
-    subparsers = base_parser.add_subparsers(title='subcommands',
-                                       dest='subcommand')
-    base_parser.add_argument('--incremental_backups', action='store_true', default=False)
+    subparsers = base_parser.add_subparsers(
+        title='subcommands',
+        dest='subcommand'
+    )
+    base_parser.add_argument(
+        '--incremental_backups',
+        action='store_true',
+        default=False
+    )
 
     put_parser = subparsers.add_parser('put', help='put files on s3 from a manifest')
     manifest_parser = subparsers.add_parser('create-upload-manifest', help='put files on s3 from a manifest')
@@ -222,10 +224,10 @@ def main():
 
     args = base_parser.parse_args()
     subcommand = args.subcommand
-    logger.info("Prepare subcommand")
+    logger.info("Prepare subcommand....")
 
     if subcommand == 'create-upload-manifest':
-        logger.info("Prepare create-upload-manifest subcommand")
+        logger.info("Prepare 'create-upload-manifest' subcommand")
         create_upload_manifest(
             args.snapshot_name,
             args.snapshot_keyspaces,
@@ -236,6 +238,7 @@ def main():
         )
 
     if subcommand == 'put':
+        logger.info("Prepare 'put' subcommand")
         check_lzop()
         put_from_manifest(
             args.s3_bucket_name,
