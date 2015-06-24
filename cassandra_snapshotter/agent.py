@@ -53,7 +53,7 @@ def compressed_pipe(path):
         bufsize=BUFFER_SIZE,
         stdout=subprocess.PIPE
     )
-
+    logger.info("path is {0}".format(path))
     while True:
         chunk = lzop.stdout.read(BUFFER_SIZE)
         if not chunk:
