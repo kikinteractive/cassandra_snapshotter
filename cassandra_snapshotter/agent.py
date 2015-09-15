@@ -38,7 +38,7 @@ UPLOAD_TIMEOUT = 600
 MULTI_PART_UPLOAD_THRESHOLD = 20  # If file size > 20M, use multi part upload
 
 # Log configuration
-logging.config.fileConfig('/tmp/logging.conf')
+logging.config.fileConfig('logging.conf')
 logger = logging.getLogger('CassandraBackup')
 
 def check_lzop():
