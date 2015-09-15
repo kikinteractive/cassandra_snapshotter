@@ -17,6 +17,7 @@ import os
 import time
 import glob
 import logging
+import logging.config
 import subprocess
 import multiprocessing
 from multiprocessing.dummy import Pool
@@ -36,8 +37,9 @@ SLEEP_TIME = 2
 UPLOAD_TIMEOUT = 600
 MULTI_PART_UPLOAD_THRESHOLD = 20  # If file size > 20M, use multi part upload
 
-logger = logging.getLogger(__name__)
-
+# Log configuration
+logging.config.fileConfig('logging.conf')
+logger = logging.getLogger('CassandraBackup')
 
 def check_lzop():
     try:
@@ -90,6 +92,7 @@ def upload_file(bucket, source, destination, s3_ssenc, bufsize):
     # If file size less than MULTI_PART_UPLOAD_THRESHOLD,
     # use single part upload
     if os.path.getsize(source) <= int(MULTI_PART_UPLOAD_THRESHOLD * MBFACTOR):
+        logger.info("Single upload {0}".format(source))
         while not completed and retry_count < MAX_RETRY_COUNT:
             try:
                 k = Key(bucket)  # Initialize S3 bucket object
@@ -97,14 +100,19 @@ def upload_file(bucket, source, destination, s3_ssenc, bufsize):
                 k.set_contents_from_filename(source, encrypt_key=s3_ssenc)
                 completed = True
             except Exception:
+                logger.error("Error uploading file {!s} to {!s}.\
+                    Retry count: {}".format(source, destination, retry_count))
                 print("Error uploading file {!s} to {!s}.\
                     Retry count: {}".format(source, destination, retry_count))
                 retry_count = retry_count + 1
                 if retry_count >= MAX_RETRY_COUNT:
+                    logger.error("Retried too many times uploading \
+                            {0}".format(source))
                     print("Retried too many times uploading file")
                     raise
     else:  # Big file, use multi part upload
         while not completed and retry_count < MAX_RETRY_COUNT:
+            logger.info("Multi upload {0}".format(source))
             mp = bucket.initiate_multipart_upload(destination, encrypt_key=s3_ssenc)
             try:
                 for i, chunk in enumerate(compressed_pipe(source, bufsize)):
@@ -112,11 +120,15 @@ def upload_file(bucket, source, destination, s3_ssenc, bufsize):
                 mp.complete_upload()  # Finish the upload
                 completed = True
             except Exception:
+                logger.error("Error uploading file {!s} to {!s}.\
+                    Retry count: {}".format(source, destination, retry_count))
                 print("Error uploading file {!s} to {!s}.\
                     Retry count: {}".format(source, destination, retry_count))
                 cancel_upload(bucket, mp, destination)
                 retry_count = retry_count + 1
                 if retry_count >= MAX_RETRY_COUNT:
+                    logger.error("Retried too many times uploading \
+                            {0}".format(source))
                     print("Retried too many times uploading file")
                     raise
 
