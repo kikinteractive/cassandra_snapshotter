@@ -332,7 +332,7 @@ class BackupWorker(object):
     def get_log_file(self):
         print("Getting log files from /home/ec2-user")
         with settings(host_string=env.hosts[0]):
-            get(retmote_path="/home/ec2-user/*.log", local_path="/tmp")
+            get(remote_path="/home/ec2-user/*.log", local_path="/tmp")
 
     def update_snapshot(self, snapshot):
         """Updates backup data changed since :snapshot was done"""
