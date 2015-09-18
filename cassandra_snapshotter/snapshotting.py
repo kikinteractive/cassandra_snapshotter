@@ -327,11 +327,12 @@ class BackupWorker(object):
         self.write_snapshot_manifest(snapshot)
         if self.backup_schema:
             self.write_schema(snapshot)
-        self.get_log_file(snapshot)
+        self.get_log_file()
 
     def get_log_file(self):
         print("Getting log files from /home/ec2-user")
-        get(retmote_path="/home/ec2-user/*.log", local_path="/tmp")
+        with settings(host_string=env.hosts[0]):
+            get(retmote_path="/home/ec2-user/*.log", local_path="/tmp")
 
     def update_snapshot(self, snapshot):
         """Updates backup data changed since :snapshot was done"""
