@@ -16,6 +16,7 @@ from boto.exception import S3ResponseError
 from datetime import datetime
 from fabric.api import (env, execute, hide, run, settings, sudo)
 from fabric.context_managers import settings
+from fabric.operations import get
 from multiprocessing.dummy import Pool
 
 
