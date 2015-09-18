@@ -327,7 +327,7 @@ class BackupWorker(object):
         self.write_snapshot_manifest(snapshot)
         if self.backup_schema:
             self.write_schema(snapshot)
-        self.get_log_file()
+        self.get_log_file(snapshot)
 
     def get_log_file(self):
         print("Getting log files from /home/ec2-user")
