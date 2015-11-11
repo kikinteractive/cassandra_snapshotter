@@ -75,7 +75,6 @@ def compress_file(path):
     path = path + '.lzo'
     return path
 
-
 def get_bucket(
         s3_bucket, aws_access_key_id,
         aws_secret_access_key, s3_connection_host):
@@ -88,12 +87,6 @@ def get_bucket(
 
 
 def destination_path(s3_base_path, file_path, compressed=True):
-    """
-    Set destination file path in AWS S3
-
-    Note:
-        For files smaller than 20M, we do not compress
-    """
     if os.path.getsize(file_path) <= int(MULTI_PART_UPLOAD_THRESHOLD * MBFACTOR):
         compressed = False
     suffix = compressed and '.lzo' or ''
