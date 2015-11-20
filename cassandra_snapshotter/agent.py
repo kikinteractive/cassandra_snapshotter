@@ -54,7 +54,7 @@ def transfer_data(path, size, compress):
     compression is done with lzop
 
     """
-    if compress:
+    if compress == 'False':
         print("Use lzop")
         lzop = subprocess.Popen(
             (LZOP_BIN, '--stdout', path),
