@@ -54,7 +54,8 @@ def run_backup(args):
         buffer_size=args.buffer_size,
         use_sudo=args.use_sudo,
         connection_pool_size=args.connection_pool_size,
-        exclude_tables=args.exclude_tables
+        exclude_tables=args.exclude_tables,
+        compress_data=args.compress_data
     )
 
     if create_snapshot:
@@ -132,6 +133,11 @@ def main():
     backup_parser = subparsers.add_parser('backup', help="Create a snapshot")
 
     # snapshot / backup arguments
+    backup_parser.add_argument(
+        '--compress-data',
+        default=False,
+        help="Compress data, default False")
+
     backup_parser.add_argument(
         '--exclude-tables',
         default='',

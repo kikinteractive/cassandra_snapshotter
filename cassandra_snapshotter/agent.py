@@ -46,7 +46,7 @@ def check_lzop():
         print("{!s} not found on path".format(LZOP_BIN))
 
 
-def compressed_pipe(path, size):
+def transfer_data(path, size, compress):
     """
     Returns a generator that yields compressed chunks of
     the given file_path
@@ -54,42 +54,24 @@ def compressed_pipe(path, size):
     compression is done with lzop
 
     """
-    lzop = subprocess.Popen(
-        (LZOP_BIN, '--stdout', path),
-        bufsize=size,
-        stdout=subprocess.PIPE
-    )
-
-    while True:
-        chunk = lzop.stdout.read(size)
-        if not chunk:
-            break
-        yield StringIO(chunk)
-
-
-def read_in_chunks(path, size):
-    """
-    Returns a generator that yields chunks of
-    the given file_path
-    """
-    with open(path, 'rb') as f:
+    if compress:
+        lzop = subprocess.Popen(
+            (LZOP_BIN, '--stdout', path),
+            bufsize=size,
+            stdout=subprocess.PIPE
+        )
         while True:
-            chunk = f.read(size)
+            chunk = lzop.stdout.read(size)
             if not chunk:
                 break
             yield StringIO(chunk)
-
-
-def compress_file(path):
-    """
-    Return an lzoped file
-
-    Note: This function is not being used at the moment, but will be
-    used against single file upload
-    """
-    subprocess.call([LZOP_BIN, path])
-    path = path + '.lzo'
-    return path
+    else:
+        with open(path, 'rb') as f:
+            while True:
+                chunk = f.read(size)
+                if not chunk:
+                    break
+                yield StringIO(chunk)
 
 
 def get_bucket(
@@ -118,7 +100,7 @@ def destination_path(s3_base_path, file_path, compressed=False):
 
 
 @map_wrap
-def upload_file(bucket, source, destination, s3_ssenc, bufsize):
+def upload_file(bucket, source, destination, s3_ssenc, bufsize, compress_data):
     completed = False
     retry_count = 0
     # If file size less than MULTI_PART_UPLOAD_THRESHOLD,
@@ -139,13 +121,14 @@ def upload_file(bucket, source, destination, s3_ssenc, bufsize):
                     print("Retried too many times uploading file")
                     raise
     else:  # Big file, use multi part upload
+        print("Compressed is {0}".format(compress_data))
         print("[MU] {0}".format(source))
         while not completed and retry_count < MAX_RETRY_COUNT:
             mp = bucket.initiate_multipart_upload(
                 destination,
                 encrypt_key=s3_ssenc)
             try:
-                for i, chunk in enumerate(read_in_chunks(source, bufsize)):
+                for i, chunk in enumerate(transfer_data(source, bufsize, compress_data)):
                     mp.upload_part_from_file(chunk, i+1)
                 mp.complete_upload()  # Finish the upload
                 completed = True
@@ -186,7 +169,7 @@ def cancel_upload(bucket, mp, remote_path):
 def put_from_manifest(
         s3_bucket, s3_connection_host, s3_ssenc, s3_base_path,
         aws_access_key_id, aws_secret_access_key, manifest,
-        bufsize, concurrency=None, incremental_backups=False):
+        bufsize, compress_data, concurrency=None, incremental_backups=False):
     """
     Uploads files listed in a manifest to amazon S3
     to support larger than 5GB files multipart upload is used (chunks of 60MB)
@@ -199,7 +182,7 @@ def put_from_manifest(
     buffer_size = int(bufsize * MBFACTOR)
     files = manifest_fp.read().splitlines()
     pool = Pool(concurrency)
-    for _ in pool.imap(upload_file, ((bucket, f, destination_path(s3_base_path, f), s3_ssenc, buffer_size) for f in files)):
+    for _ in pool.imap(upload_file, ((bucket, f, destination_path(s3_base_path, f), s3_ssenc, buffer_size, compress_data) for f in files)):
         pass
     pool.terminate()
 
@@ -284,6 +267,12 @@ def main():
         help="Compress and upload buffer size")
 
     put_parser.add_argument(
+        '--compress_data',
+        required=False,
+        default=False,
+        help="Compress data? Default no")
+
+    put_parser.add_argument(
         '--manifest',
         required=True,
         help="The manifest containing the files to put on s3")
@@ -331,6 +320,7 @@ def main():
             args.aws_secret_access_key,
             args.manifest,
             args.bufsize,
+            args.compress_data,
             args.concurrency,
             args.incremental_backups
         )

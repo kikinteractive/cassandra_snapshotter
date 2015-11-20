@@ -238,7 +238,7 @@ class BackupWorker(object):
                  aws_access_key_id, s3_bucket_region, s3_ssenc,
                  s3_connection_host, cassandra_conf_path, use_sudo,
                  nodetool_path, cassandra_bin_dir, backup_schema,
-                 buffer_size, exclude_tables, connection_pool_size=12):
+                 buffer_size, exclude_tables, compress_data, connection_pool_size=12):
         self.aws_secret_access_key = aws_secret_access_key
         self.aws_access_key_id = aws_access_key_id
         self.s3_bucket_region = s3_bucket_region
@@ -256,6 +256,10 @@ class BackupWorker(object):
         else:
             self.use_sudo = use_sudo
         self.exclude_tables = exclude_tables
+        if isinstance(compress_data, basestring):
+            self.compress_data = bool(strtobool(compress_data))
+        else:
+            self.compress_data = compress_data
 
     def get_current_node_hostname(self):
         return env.host_string
@@ -264,7 +268,8 @@ class BackupWorker(object):
         prefix = '/'.join(snapshot.base_path.split(
             '/') + [self.get_current_node_hostname()])
 
-        manifest_path = '{}/backupmanifest'.format(expanduser('~'))
+        manifest_path = '{}/backupmanifest'.format(expanduser('txu'))
+        #manifest_path = '{}/backupmanifest'.format(expanduser('~'))
         manifest_command = "cassandra-snapshotter-agent \
             %(incremental_backups)s create-upload-manifest \
             --manifest_path=%(manifest_path)s \
@@ -297,6 +302,7 @@ class BackupWorker(object):
             --s3-base-path=%(prefix)s \
             --manifest=%(manifest)s \
             --bufsize=%(bufsize)s \
+            --compress_data=%(compress_data)s \
             --concurrency=4"
         cmd = upload_command % dict(
             bucket=snapshot.s3_bucket,
@@ -307,6 +313,7 @@ class BackupWorker(object):
             secret=self.aws_secret_access_key,
             manifest=manifest_path,
             bufsize=self.buffer_size,
+            compress_data=self.compress_data,
             incremental_backups=incremental_backups and\
                 '--incremental_backups' or ''
         )
