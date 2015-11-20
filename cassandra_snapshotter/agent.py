@@ -34,7 +34,7 @@ LZOP_BIN = 'lzop'
 MAX_RETRY_COUNT = 3
 SLEEP_TIME = 2
 UPLOAD_TIMEOUT = 600
-MULTI_PART_UPLOAD_THRESHOLD = 200000  # If file size > 200G, use multi part upload
+MULTI_PART_UPLOAD_THRESHOLD = 60  # If file size > 60G, use multi part upload
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +67,19 @@ def compressed_pipe(path, size):
         yield StringIO(chunk)
 
 
+def read_in_chunks(path, size):
+    """
+    Returns a generator that yields chunks of
+    the given file_path
+    """
+    with open(path, 'rb') as f:
+        while True:
+            chunk = f.read(size)
+            if not chunk:
+                break
+            yield StringIO(chunk)
+
+
 def compress_file(path):
     """
     Return an lzoped file
@@ -90,7 +103,7 @@ def get_bucket(
     return connection.get_bucket(s3_bucket, validate=False)
 
 
-def destination_path(s3_base_path, file_path, compressed=True):
+def destination_path(s3_base_path, file_path, compressed=False):
     """
     Set destination file path in AWS S3
 
@@ -99,6 +112,7 @@ def destination_path(s3_base_path, file_path, compressed=True):
     """
     if os.path.getsize(file_path) <= int(MULTI_PART_UPLOAD_THRESHOLD * MBFACTOR):
         compressed = False
+    compressed = False
     suffix = compressed and '.lzo' or ''
     return '/'.join([s3_base_path, file_path + suffix])
 
@@ -131,7 +145,7 @@ def upload_file(bucket, source, destination, s3_ssenc, bufsize):
                 destination,
                 encrypt_key=s3_ssenc)
             try:
-                for i, chunk in enumerate(compressed_pipe(source, bufsize)):
+                for i, chunk in enumerate(read_in_chunks(source, bufsize)):
                     mp.upload_part_from_file(chunk, i+1)
                 mp.complete_upload()  # Finish the upload
                 completed = True
