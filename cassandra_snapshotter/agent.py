@@ -34,7 +34,7 @@ LZOP_BIN = 'lzop'
 MAX_RETRY_COUNT = 3
 SLEEP_TIME = 2
 UPLOAD_TIMEOUT = 600
-MULTI_PART_UPLOAD_THRESHOLD = 60  # If file size > 60G, use multi part upload
+MULTI_PART_UPLOAD_THRESHOLD = 60  # If file size > 60M, use multi part upload
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +108,6 @@ def upload_file(bucket, source, destination, s3_ssenc, bufsize, compress_data):
     # If file size less than MULTI_PART_UPLOAD_THRESHOLD,
     # use single part upload
     if os.path.getsize(source) <= int(MULTI_PART_UPLOAD_THRESHOLD * MBFACTOR):
-        print("Compressed is {0}".format(compress_data))
         print("[SU] {0}".format(source))
         while not completed and retry_count < MAX_RETRY_COUNT:
             try:
@@ -124,7 +123,6 @@ def upload_file(bucket, source, destination, s3_ssenc, bufsize, compress_data):
                     print("Retried too many times uploading file")
                     raise
     else:  # Big file, use multi part upload
-        print("Compressed is {0}".format(compress_data))
         print("[MU] {0}".format(source))
         while not completed and retry_count < MAX_RETRY_COUNT:
             mp = bucket.initiate_multipart_upload(
