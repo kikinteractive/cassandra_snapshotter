@@ -106,6 +106,7 @@ def upload_file(bucket, source, destination, s3_ssenc, bufsize, compress_data):
     # If file size less than MULTI_PART_UPLOAD_THRESHOLD,
     # use single part upload
     if os.path.getsize(source) <= int(MULTI_PART_UPLOAD_THRESHOLD * MBFACTOR):
+        print("Compressed is {0}".format(compress_data))
         print("[SU] {0}".format(source))
         while not completed and retry_count < MAX_RETRY_COUNT:
             try:
@@ -310,7 +311,8 @@ def main():
         )
 
     if subcommand == 'put':
-        check_lzop()
+        if args.compress_data:
+            check_lzop()
         put_from_manifest(
             args.s3_bucket_name,
             get_s3_connection_host(args.s3_bucket_region),
