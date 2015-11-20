@@ -55,6 +55,7 @@ def transfer_data(path, size, compress):
 
     """
     if compress:
+        print("Use lzop")
         lzop = subprocess.Popen(
             (LZOP_BIN, '--stdout', path),
             bufsize=size,
@@ -66,6 +67,7 @@ def transfer_data(path, size, compress):
                 break
             yield StringIO(chunk)
     else:
+        print("Use file read")
         with open(path, 'rb') as f:
             while True:
                 chunk = f.read(size)
