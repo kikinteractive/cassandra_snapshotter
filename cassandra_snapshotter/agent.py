@@ -105,6 +105,7 @@ def destination_path(s3_base_path, file_path, compressed=False):
 def upload_file(bucket, source, destination, s3_ssenc, bufsize, compress_data):
     completed = False
     retry_count = 0
+    print("compress_data is {0}({1})".format(compress_data, type(compress_data)))
     # If file size less than MULTI_PART_UPLOAD_THRESHOLD,
     # use single part upload
     if os.path.getsize(source) <= int(MULTI_PART_UPLOAD_THRESHOLD * MBFACTOR):
