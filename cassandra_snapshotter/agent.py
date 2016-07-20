@@ -191,13 +191,11 @@ def put_from_manifest(
     # Create a boto3 session
     session = Session(aws_access_key_id = aws_access_key_id, aws_secret_access_key = aws_secret_access_key, region_name='us-east-1')
     client = session.client('s3')
-    #client = boto3.client('s3')
     event_system = client.meta.events
     config = TransferConfig(
         multipart_threshold = MULTI_PART_UPLOAD_THRESHOLD,
         max_concurrency=4)
     transfer = S3Transfer(client, config)
-    # set_stream_logger(name='boto3', level=logging.DEBUG, format_string)
     boto3.set_stream_logger('botocore', logging.INFO)
 
     manifest_fp = open(manifest, 'r')
@@ -206,14 +204,6 @@ def put_from_manifest(
         file_path = s3_base_path + f
         print("boto3, upload file {0} to {1}: {2}".format(f, s3_bucket, file_path))
         transfer.upload_file(f, s3_bucket, file_path)
-    #pool = Pool(concurrency)
-    #for _ in pool.map(upload_file, ((bucket, f, destination_path(s3_base_path, f), s3_ssenc, buffer_size, compress_data) for f in files)):
-    #    pass
-    #pool.terminate()
-
-    #if incremental_backups:
-    #    for f in files:
-    #        os.remove(f)
 
 
 def get_data_path(conf_path):
