@@ -190,7 +190,7 @@ def put_from_manifest(
 
     # Create a boto3 session
     session = Session(aws_access_key_id = aws_access_key_id, aws_secret_access_key = aws_secret_access_key, region_name='us-east-1')
-    client = session.client('s3')
+    client = session.client('s3', config=Config(signature_version='s3v4'))
     event_system = client.meta.events
     config = TransferConfig(
         multipart_threshold = MULTI_PART_UPLOAD_THRESHOLD,
