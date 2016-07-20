@@ -3,9 +3,6 @@ from __future__ import (absolute_import, print_function)
 # From system
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
-import boto3
-from boto3.session import Session
-from boto3.s3.transfer import (S3Transfer, TransferConfig)
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -121,8 +118,6 @@ def upload_file(bucket, source, destination, s3_ssenc, bufsize, compress_data):
                 completed = True
                 print("[SU] - {0}({1}) upload completed, number of bytes wrriten={2}".format(source, source_size, bytes_written))
             except Exception:
-                print("Error uploading file {!s} to {!s}.".format(source))
-            except Exception:
                 print("Error uploading file {!s} to {!s}.\
                     Retry count: {}".format(source, destination, retry_count))
                 retry_count = retry_count + 1
@@ -187,33 +182,17 @@ def put_from_manifest(
     bucket = get_bucket(
         s3_bucket, aws_access_key_id,
         aws_secret_access_key, s3_connection_host)
-
-    # Create a boto3 session
-    session = Session(aws_access_key_id = aws_access_key_id, aws_secret_access_key = aws_secret_access_key, region_name='us-east-1')
-    client = session.client('s3')
-    #client = boto3.client('s3')
-    event_system = client.meta.events
-    config = TransferConfig(
-        multipart_threshold = MULTI_PART_UPLOAD_THRESHOLD,
-        max_concurrency=4)
-    transfer = S3Transfer(client, config)
-    # set_stream_logger(name='boto3', level=logging.DEBUG, format_string)
-    boto3.set_stream_logger('botocore', logging.INFO)
-
     manifest_fp = open(manifest, 'r')
+    buffer_size = int(bufsize * MBFACTOR)
     files = manifest_fp.read().splitlines()
-    for f in files:
-        file_path = s3_base_path + f
-        print("boto3, upload file {0} to {1}: {2}".format(f, s3_bucket, file_path))
-        transfer.upload_file(f, s3_bucket, file_path)
-    #pool = Pool(concurrency)
-    #for _ in pool.map(upload_file, ((bucket, f, destination_path(s3_base_path, f), s3_ssenc, buffer_size, compress_data) for f in files)):
-    #    pass
-    #pool.terminate()
+    pool = Pool(concurrency)
+    for _ in pool.map(upload_file, ((bucket, f, destination_path(s3_base_path, f), s3_ssenc, buffer_size, compress_data) for f in files)):
+        pass
+    pool.terminate()
 
-    #if incremental_backups:
-    #    for f in files:
-    #        os.remove(f)
+    if incremental_backups:
+        for f in files:
+            os.remove(f)
 
 
 def get_data_path(conf_path):
