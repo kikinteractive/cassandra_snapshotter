@@ -1,5 +1,8 @@
 from __future__ import (absolute_import, print_function)
 
+# Note, this is for boto2 users. Do not use this file yet, need some fix to get
+# it work!!
+
 # From system
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
