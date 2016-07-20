@@ -203,7 +203,11 @@ def put_from_manifest(
     for f in files:
         file_path = s3_base_path + f
         print("boto3, upload file {0} to {1}: {2}".format(f, s3_bucket, file_path))
-        transfer.upload_file(f, s3_bucket, file_path)
+        transfer.upload_file(
+            f,
+            s3_bucket,
+            file_path,
+            extra_args={'SSEKMSKeyId' : 'kik-enc/v1/cassandra'})
 
 
 def get_data_path(conf_path):
