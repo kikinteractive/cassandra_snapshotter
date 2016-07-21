@@ -4,6 +4,7 @@ from __future__ import (absolute_import, print_function)
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 import boto3
+from botocore.client import Config
 from boto3.session import Session
 from boto3.s3.transfer import (S3Transfer, TransferConfig)
 try:
@@ -207,8 +208,9 @@ def put_from_manifest(
             f,
             s3_bucket,
             file_path,
-            extra_args={'SSEKMSKeyId' : 'kik-enc/v1/cassandra'})
-
+            extra_args={
+                'ServerSideEncryption' : 'aws:kms',
+                'SSEKMSKeyId' : '72a58cb9-f18f-4958-a264-7f03ad2bf952'})
 
 def get_data_path(conf_path):
     """Retrieve cassandra data_file_directories from cassandra.yaml"""
