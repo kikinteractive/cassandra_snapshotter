@@ -331,19 +331,12 @@ class BackupWorker(object):
             self.upload_cluster_backups(snapshot, incremental_backups=False)
         finally:
             self.clear_cluster_snapshot(snapshot)
-        self.write_ring_description(snapshot)
-        self.write_snapshot_manifest(snapshot)
-        if self.backup_schema:
-            self.write_schema(snapshot)
 
     def update_snapshot(self, snapshot):
         """Updates backup data changed since :snapshot was done"""
         logging.info("Update {!r} snapshot".format(snapshot))
         self.start_cluster_backup(snapshot, incremental_backups=True)
         self.upload_cluster_backups(snapshot, incremental_backups=True)
-        self.write_ring_description(snapshot)
-        if self.backup_schema:
-            self.write_schema(snapshot)
 
     def get_ring_description(self):
         with settings(host_string=env.hosts[0]):
